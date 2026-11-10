@@ -49,7 +49,7 @@ var bypassPatterns = []bypassPattern{
 	// only fired when the qualifier followed the verb directly. It is a closed set
 	// on purpose — a generic `(?:\s+\w+){0,3}` filler would drag in benign prose,
 	// because the noun list carries broad words (data, content, context, text).
-	{1, mustFiltered(`(?i)\b(ignore|disregard|skip|forget|neglect|overlook|omit|bypass|override|discard|supersede|set aside|pay no attention to|do not follow|do not obey)\s+(?:(?:all|any|the|these|those|your|its|our|my|of)\s+){0,3}(prior|previous|preceding|above|foregoing|earlier|initial)?\s*(content|text|instructions?|directives?|commands?|context|conversation|inputs?|data|messages?|communication|responses?|requests?)\b`),
+	{1, mustFiltered(`(?i)\b(ignore|disregard|skip|forget|neglect|overlook|omit|bypass|override|discard|supersede|set aside|pay no attention to|do not follow|do not obey)\s+(?:(?:all|any|the|these|those|your|its|our|my|of)\s+){0,3}(prior|previous|preceding|above|foregoing|earlier|initial)?\s*(content|text|instructions?|directives?|commands?|context|conversation|inputs?|data|messages?|communication|responses?|requests?|guidance|directions?|orders?)\b`),
 		finding.Error, "instruction override", false},
 	// The same override aimed at the rules the agent works under, which needs
 	// the qualifier: "disregard all earlier guardrails", "ignore your previous
