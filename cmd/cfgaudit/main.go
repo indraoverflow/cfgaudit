@@ -2464,7 +2464,11 @@ func attachSkillShellToPluginSkills(targets []*rules.Target, dir string) {
 // cross-agent skill roots are left alone, since no other agent is known to run
 // such a block.
 func attachSkillHooks(t *rules.Target) {
-	if !isClaudeSkillOrCommandFile(t.InstructionFile) {
+	// Qwen Code skills (.qwen/skills/**/SKILL.md) carry the same frontmatter
+	// `hooks:` block as Claude Code skills, gated on explicit folder trust
+	// (#1720). Decode it the same way so the command-content rules see each
+	// handler; CFG086 stays off because these hooks are trust-gated.
+	if !isClaudeSkillOrCommandFile(t.InstructionFile) && !isQwenSkillFile(t.InstructionFile) {
 		return
 	}
 	kind := "command"
@@ -2622,6 +2626,18 @@ func isGeminiAgentFile(path string) bool {
 // projectInstructionGlobs matches that.
 func isQwenSubagentFile(path string) bool {
 	return isAgentDefinitionFile(path, ".qwen")
+}
+
+// isQwenSkillFile reports whether path is a SKILL.md directly inside a
+// .qwen/skills/<name> directory. Qwen Code runs its frontmatter `hooks:` block
+// for such a skill, gated on explicit folder trust (#1720).
+func isQwenSkillFile(path string) bool {
+	if path == "" || !strings.EqualFold(filepath.Base(path), "SKILL.md") {
+		return false
+	}
+	dir := filepath.Dir(path)
+	return filepath.Base(filepath.Dir(dir)) == "skills" &&
+		filepath.Base(filepath.Dir(filepath.Dir(dir))) == ".qwen"
 }
 
 // isAgentDefinitionFile reports whether path is a Markdown file directly inside
