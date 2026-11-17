@@ -74,6 +74,7 @@ var sensitivePathRe = mustFiltered(`(?i)(` +
 	`|credentials\.json\b` +
 	`|[\w.\-/]+\.pem\b` +
 	`|(?:[\w.\-]*/)+[\w.\-]*\.key\b` +
+	`|(?:[\w.\-]*/)+(?:privatekey|publickey)\b` +
 	`)`)
 
 // pathActionRe matches a read/transmit verb that turns a sensitive-file reference
@@ -467,8 +468,22 @@ func (r *cfg031) Check(t *Target) []finding.Finding {
 		for i, line := range lines {
 			loc := sensitivePathRe.FindStringIndex(line)
 			// A public key is meant to be shared: look past "id_ed25519.pub"
-			// to a private key later on the line (#952).
-			for loc != nil && strings.HasPrefix(line[loc[1]:], ".pub") {
+			// to a private key later on the line (#952), and past a key file
+			// whose name says it is public ("server_public.key", "publickey",
+			// "public.pem"), which is the same case under another naming
+			// convention (#1814).
+			for loc != nil {
+				base := pathToken(line, loc)
+				if idx := strings.LastIndexByte(base, '/'); idx >= 0 {
+					base = base[idx+1:]
+				}
+				lowerBase := strings.ToLower(base)
+				isPublic := strings.HasPrefix(line[loc[1]:], ".pub") ||
+					strings.Contains(lowerBase, "public") ||
+					strings.Contains(lowerBase, "pubkey")
+				if !isPublic {
+					break
+				}
 				next := sensitivePathRe.FindStringIndex(line[loc[1]:])
 				if next == nil {
 					loc = nil
